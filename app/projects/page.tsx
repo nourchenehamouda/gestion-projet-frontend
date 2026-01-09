@@ -1,179 +1,73 @@
-"use client";
-
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import Modal from "@/components/Modal";
-import ProjectCard from "@/components/ProjectCard";
-import { useAuth } from "@/hooks/useAuth";
-import { useProjects, useProjectActions } from "@/hooks/useProjects";
-import { projectStatusLabels } from "@/utils/constants";
-import type { ProjectStatus } from "@/utils/types";
-
-const projectSchema = z.object({
-  name: z.string().min(3, "Nom requis"),
-  description: z.string().min(10, "Description requise"),
-  status: z.enum(["PLANNED", "IN_PROGRESS", "DONE", "PAUSED"]),
-  startDate: z.string().min(1, "Date de début requise"),
-  endDate: z.string().optional(),
-});
-
-type ProjectFormValues = z.infer<typeof projectSchema>;
+const projects = [
+  {
+    name: "CNI-Portal",
+    status: "En cours",
+    description: "Modernisation du portail de gestion interne.",
+    tags: ["Strategic", "Web"],
+  },
+  {
+    name: "Kanban Core",
+    status: "Planifié",
+    description: "Refonte du workflow de tâches et sprints.",
+    tags: ["Agile", "Process"],
+  },
+  {
+    name: "Docs Hub",
+    status: "En pause",
+    description: "Centralisation des documents projet et versions.",
+    tags: ["Documents"],
+  },
+];
 
 export default function ProjectsPage() {
-  const router = useRouter();
-  const { isAuthenticated, isLoading, role } = useAuth();
-  const { data: projects = [] } = useProjects();
-  const { createMutation, deleteMutation } = useProjectActions();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const canManageProjects = role === "PROJECT_MANAGER" || role === "ADMIN";
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<ProjectFormValues>({
-    resolver: zodResolver(projectSchema),
-    defaultValues: {
-      status: "PLANNED",
-    },
-  });
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace("/login");
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  const sortedProjects = useMemo(() => {
-    return [...projects].sort((a, b) => a.name.localeCompare(b.name));
-  }, [projects]);
-
   return (
-    <div className="space-y-8">
-      <header className="rounded-3xl bg-white p-8 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Projets
-            </p>
-            <h1 className="mt-4 text-3xl font-semibold text-slate-900">
-              Catalogue des projets
-            </h1>
-            <p className="mt-4 text-slate-600">
-              Consultez les projets actifs et suivez l'avancement par statut.
-            </p>
-          </div>
-          {canManageProjects && (
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+    <div className="min-h-screen bg-slate-50 px-6 py-12 text-slate-900">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+        <header className="rounded-3xl bg-white p-8 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Projets
+          </p>
+          <h1 className="mt-4 text-3xl font-semibold text-slate-900">
+            Catalogue des projets en cours
+          </h1>
+          <p className="mt-4 text-slate-600">
+            Gérez les projets, affectez les membres et suivez l'avancement grâce aux statuts
+            et aux tags.
+          </p>
+        </header>
+
+        <section className="grid gap-6 lg:grid-cols-2">
+          {projects.map((project) => (
+            <article
+              key={project.name}
+              className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm"
             >
-              Créer un projet
-            </button>
-          )}
-        </div>
-      </header>
-
-      <section className="grid gap-6 lg:grid-cols-2">
-        {sortedProjects.map((project) => (
-          <ProjectCard
-            key={project.id}
-            project={project}
-            readOnly={!canManageProjects}
-            onEdit={() => router.push(`/projects/${project.id}`)}
-            onDelete={() => deleteMutation.mutate(project.id)}
-          />
-        ))}
-      </section>
-
-      <Modal
-        isOpen={isModalOpen}
-        title="Nouveau projet"
-        onClose={() => {
-          setIsModalOpen(false);
-          reset();
-        }}
-      >
-        <form
-          className="space-y-4"
-          onSubmit={handleSubmit((data) => {
-            createMutation.mutate({
-              ...data,
-              endDate: data.endDate || null,
-            });
-            setIsModalOpen(false);
-            reset();
-          })}
-        >
-          <label className="block text-sm font-medium text-slate-700">
-            Nom du projet
-            <input
-              type="text"
-              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-              {...register("name")}
-            />
-            {errors.name && (
-              <span className="mt-2 block text-xs text-red-600">{errors.name.message}</span>
-            )}
-          </label>
-          <label className="block text-sm font-medium text-slate-700">
-            Description
-            <textarea
-              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-              rows={3}
-              {...register("description")}
-            />
-            {errors.description && (
-              <span className="mt-2 block text-xs text-red-600">
-                {errors.description.message}
-              </span>
-            )}
-          </label>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-medium text-slate-700">
-              Statut
-              <select
-                className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-                {...register("status")}
-              >
-                {Object.entries(projectStatusLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-900">{project.name}</h2>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                  {project.status}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-slate-600">{project.description}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {project.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500"
+                  >
+                    {tag}
+                  </span>
                 ))}
-              </select>
-            </label>
-            <label className="block text-sm font-medium text-slate-700">
-              Date de début
-              <input
-                type="date"
-                className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-                {...register("startDate")}
-              />
-            </label>
-          </div>
-          <label className="block text-sm font-medium text-slate-700">
-            Date de fin (optionnel)
-            <input
-              type="date"
-              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-              {...register("endDate")}
-            />
-          </label>
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
-          >
-            Enregistrer
-          </button>
-        </form>
-      </Modal>
+              </div>
+              <div className="mt-6 flex items-center gap-3 text-sm text-slate-500">
+                <span>Chef de projet : A. Traoré</span>
+                <span>•</span>
+                <span>Équipe : 6 membres</span>
+              </div>
+            </article>
+          ))}
+        </section>
+      </main>
     </div>
   );
 }

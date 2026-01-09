@@ -211,8 +211,7 @@ export default function Home() {
                 { label: "Connexion", href: "/login" },
                 { label: "Tableau de bord", href: "/dashboard" },
                 { label: "Projets", href: "/projects" },
-                { label: "Détails projet", href: "/projects/PRJ-001" },
-                { label: "Utilisateurs", href: "/users" },
+                { label: "Détails projet", href: "/projects/cni-portal" },
               ].map((link) => (
                 <a
                   key={link.label}
