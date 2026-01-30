@@ -5,6 +5,7 @@ type UserPayload = {
   name: string;
   email: string;
   role: User["role"];
+  password: string;
   isActive?: boolean;
 };
 

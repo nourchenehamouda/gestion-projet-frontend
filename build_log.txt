@@ -1,0 +1,41 @@
+
+> gestion-projet-frontend@0.1.0 build
+> next build
+
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\MSI\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\MSI\Documents\Gestion_Projets_cni\gestion-projet-frontend-1\package-lock.json
+
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+Found 1 warning while optimizing generated CSS:
+
+[2m│   }[22m
+[2m│ }[22m
+[2m│[22m @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+[2m┆[22m        [33m[2m^--[22m @import rules must precede all rules aside from @charset and @layer statements[39m
+[2m┆[22m
+[2m│ :root {[22m
+[2m│   --primary-50: #eef2ff;[22m
+
+✓ Compiled successfully in 9.9s
+  Running TypeScript ...
+Failed to compile.
+
+./app/projects/[id]/page.tsx:60:17
+Type error: Property 'filter' does not exist on type '{}'.
+
+[0m [90m 58 |[39m   [90m// Group tasks by status for Kanban[39m
+ [90m 59 |[39m   [36mconst[39m kanbanColumns [33m=[39m {
+[31m[1m>[22m[39m[90m 60 |[39m     [33mTODO[39m[33m:[39m tasks[33m.[39mfilter((t[33m:[39m any) [33m=>[39m t[33m.[39mstatus [33m===[39m [32m"TODO"[39m)[33m,[39m
+ [90m    |[39m                 [31m[1m^[22m[39m
+ [90m 61 |[39m     [33mIN_PROGRESS[39m[33m:[39m tasks[33m.[39mfilter((t[33m:[39m any) [33m=>[39m t[33m.[39mstatus [33m===[39m [32m"IN_PROGRESS"[39m)[33m,[39m
+ [90m 62 |[39m     [33mDONE[39m[33m:[39m tasks[33m.[39mfilter((t[33m:[39m any) [33m=>[39m t[33m.[39mstatus [33m===[39m [32m"DONE"[39m)[33m,[39m
+ [90m 63 |[39m   }[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

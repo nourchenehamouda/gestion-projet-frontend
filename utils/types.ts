@@ -1,4 +1,4 @@
-export type Role = "ADMIN" | "PROJECT_MANAGER" | "TEAM_MEMBER";
+﻿export type Role = "ADMIN" | "PROJECT_MANAGER" | "EMPLOYEE" | "CLIENT";
 
 export type User = {
   id: string;
@@ -11,14 +11,19 @@ export type User = {
 
 export type ProjectStatus = "PLANNED" | "IN_PROGRESS" | "DONE" | "PAUSED";
 
+export type ProjectMember = {
+  userId: string;
+  roleInProject: string;
+};
+
 export type Project = {
   id: string;
   name: string;
   description: string;
   status: ProjectStatus;
-  startDate: string;
+  startDate?: string | null;
   endDate?: string | null;
-  members: Array<{ id: string; name: string; role: Role }>;
+  members: ProjectMember[];
 };
 
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE";
@@ -34,4 +39,6 @@ export type Task = {
   assigneeId?: string | null;
   dueDate?: string | null;
   createdAt: string;
+  documentAvailable?: boolean;
+  documentName?: string;
 };

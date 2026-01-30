@@ -1,450 +1,387 @@
-const modules = [
+"use client";
+
+import { motion } from "framer-motion";
+import Link from "next/link";
+import {
+  ChartBarIcon,
+  ClipboardDocumentCheckIcon,
+  BellAlertIcon,
+  UserGroupIcon,
+  DocumentTextIcon,
+  ShieldCheckIcon,
+  ArrowRightIcon,
+  SparklesIcon,
+} from "@heroicons/react/24/outline";
+
+const features = [
   {
-    title: "Authentification & gestion des utilisateurs",
+    icon: ClipboardDocumentCheckIcon,
+    title: "Gestion de Projets",
     description:
-      "Connexion/inscription (si nécessaire) avec rôles et permissions (Admin, Chef de projet, Membre d'équipe, Client optionnel).",
-    bullets: [
-      "Création, affectation, activation/désactivation des comptes.",
-      "Gestion des droits d'accès (RBAC).",
-    ],
+      "Créez, organisez et suivez vos projets avec des statuts, dates et équipes dédiées.",
+    gradient: "from-blue-500 to-cyan-500",
   },
   {
-    title: "Gestion des projets",
+    icon: ChartBarIcon,
+    title: "Tableau Kanban",
     description:
-      "CRUD complet avec statut, dates, budget optionnel, tags/catégories et affectation des membres.",
-    bullets: [
-      "Statuts : Planifié, En cours, Terminé, En pause.",
-      "Rôles par projet et affectation des membres.",
-    ],
+      "Visualisez l'avancement avec des colonnes À faire, En cours et Terminé.",
+    gradient: "from-purple-500 to-pink-500",
   },
   {
-    title: "Gestion des tâches (Kanban)",
+    icon: UserGroupIcon,
+    title: "Gestion d'Équipe",
     description:
-      "Tableau Kanban (À faire, En cours, Terminé) avec priorité, estimation, deadline et assignation.",
-    bullets: [
-      "Commentaires, pièces jointes et checklist de sous-tâches.",
-      "Suivi du temps optionnel par tâche.",
-    ],
+      "Assignez des rôles, gérez les permissions et collaborez efficacement.",
+    gradient: "from-orange-500 to-red-500",
   },
   {
-    title: "Gestion des sprints (Scrum)",
-    description:
-      "Planification des sprints avec objectifs, backlog et dates début/fin.",
-    bullets: [
-      "Burndown chart et velocity optionnels.",
-      "Notes de review et rétrospective (optionnel).",
-    ],
-  },
-  {
-    title: "Gestion des incidents (Issues/Bugs)",
-    description:
-      "Suivi des bugs et améliorations avec workflow et sévérité.",
-    bullets: ["Étapes de reproduction et description détaillée."],
-  },
-  {
-    title: "Gestion documentaire",
-    description:
-      "Import de documents liés aux projets (spécifications, images, etc.).",
-    bullets: ["Versioning simple optionnel."],
-  },
-  {
+    icon: BellAlertIcon,
     title: "Notifications",
     description:
-      "Notifications internes et/ou email pour événements clés.",
-    bullets: [
-      "Affectation de tâches, deadlines proches, commentaires, changements de statut.",
-    ],
+      "Restez informé des assignations, deadlines et changements en temps réel.",
+    gradient: "from-green-500 to-emerald-500",
   },
   {
-    title: "Tableau de bord & rapports",
+    icon: DocumentTextIcon,
+    title: "Gestion Documentaire",
     description:
-      "Dashboard pour Admin/Chef de projet avec indicateurs clés.",
-    bullets: [
-      "Projets par statut, tâches en retard, charge par membre, avancement sprint.",
-      "Export PDF/Excel optionnel.",
-    ],
-  },
-];
-
-const architecture = [
-  {
-    title: "Front-end · Next.js",
-    details: [
-      "Pages : /login, /dashboard, /projects, /projects/[id] (board, sprints, documents, rapports).",
-      "UI : tableaux, Kanban, formulaires, modales.",
-      "Gestion du cache et des appels API : React Query ou SWR.",
-      "JWT stocké dans un cookie httpOnly.",
-    ],
+      "Attachez des fichiers, spécifications et livrables à vos projets.",
+    gradient: "from-indigo-500 to-purple-500",
   },
   {
-    title: "Back-end · Spring Boot",
-    details: [
-      "Architecture en couches : Controller, Service, Repository.",
-      "Sécurité : Spring Security + JWT + RBAC.",
-      "Validation des données : Bean Validation.",
-      "Gestion des fichiers : GridFS ou stockage local/S3.",
-    ],
-  },
-  {
-    title: "Base de données · MongoDB",
-    details: [
-      "Collections : users, projects, project_members, tasks, sprints, issues, comments, notifications, files.",
-    ],
+    icon: ShieldCheckIcon,
+    title: "Sécurité Avancée",
+    description:
+      "Authentification JWT, chiffrement BCrypt et contrôle RBAC complet.",
+    gradient: "from-rose-500 to-pink-500",
   },
 ];
 
-const dataModels = [
-  {
-    title: "User",
-    fields: "_id, name, email, passwordHash, role, createdAt",
+const stats = [
+  { value: "99.9%", label: "Disponibilité" },
+  { value: "500+", label: "Projets Gérés" },
+  { value: "50+", label: "Équipes Actives" },
+  { value: "24/7", label: "Support" },
+];
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 30 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.6 },
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1,
+    },
   },
-  {
-    title: "Project",
-    fields:
-      "_id, name, description, status, startDate, endDate, ownerId, members[{ userId, roleInProject }]",
-  },
-  {
-    title: "Task",
-    fields:
-      "_id, projectId, title, description, status, priority, assigneeId, sprintId?, dueDate, estimatePoints, labels[], attachments[], createdAt",
-  },
-  {
-    title: "Sprint",
-    fields: "_id, projectId, name, startDate, endDate, goal, taskIds[]",
-  },
-];
+};
 
-const apiEndpoints = [
-  "POST /auth/login",
-  "GET /users (admin)",
-  "GET /projects",
-  "POST /projects",
-  "GET /projects/{id}",
-  "POST /projects/{id}/members",
-  "GET /projects/{id}/tasks",
-  "POST /tasks",
-  "PATCH /tasks/{id}",
-  "POST /projects/{id}/sprints",
-  "GET /projects/{id}/reports",
-];
-
-const workflowSteps = [
-  "L'Admin crée les utilisateurs et attribue les rôles.",
-  "Le Chef de projet crée un projet et affecte l'équipe.",
-  "Il crée les tâches et les distribue.",
-  "Lors du sprint planning, il associe les tâches au sprint.",
-  "L'équipe avance via Kanban et commentaires.",
-  "Le suivi se fait via le tableau de bord et les rapports.",
-];
-
-const mvpItems = [
-  "Authentification JWT + rôles (Admin/PM/Member).",
-  "CRUD projets + affectation des membres.",
-  "CRUD tâches + statuts Kanban.",
-  "Commentaires sur tâches.",
-  "Dashboard simple (compteurs + tâches en retard).",
-];
-
-const bestPractices = [
-  "Utiliser des DTO entre front et back pour contrôler les données exposées.",
-  "Ajouter des champs de traçabilité : createdBy, updatedBy, updatedAt.",
-  "Ajouter des index MongoDB : projectId, assigneeId, status, dueDate.",
-  "Gestion standard des erreurs + logs (Spring Boot + middleware front).",
-];
-
-const securityItems = [
-  "Mots de passe chiffrés avec BCrypt.",
-  "Authentification JWT et contrôle d'accès RBAC.",
-  "Validation des données avec Bean Validation.",
-  "Gestion des fichiers via GridFS ou stockage externe sécurisé.",
-];
-
-const testItems = [
-  "Tests des endpoints API via Postman.",
-  "Tests fonctionnels de l'interface utilisateur.",
-  "Vérification des principaux cas d'usage (auth, projets, tâches, sprints).",
-];
-
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-slate-50 px-6 py-12 text-slate-900">
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-10">
-        <section className="rounded-3xl bg-white p-8 shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-            CNI · Stage de 3 semaines
-          </p>
-          <h1 className="mt-4 text-3xl font-semibold text-slate-900 sm:text-4xl">
-            Plateforme de gestion de projets, tâches et sprints
-          </h1>
-          <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
-            Application web centralisée pour piloter les projets, structurer le travail
-            d'équipe et renforcer la collaboration grâce à une interface moderne et
-            sécurisée.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            {[
-              "Kanban",
-              "Sprints Scrum",
-              "Gestion des incidents",
-              "Documents",
-              "Notifications",
-              "Rapports",
-            ].map((item) => (
-              <span
-                key={item}
-                className="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600"
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        </section>
+    <div className="min-h-screen bg-slate-50 overflow-hidden">
+      {/* Hero Section */}
+      <section className="relative min-h-screen hero-bg flex items-center justify-center px-6 py-20">
+        {/* Animated Background Elements */}
+        <div className="hero-blob hero-blob-1 animate-float-slow" />
+        <div className="hero-blob hero-blob-2 animate-float" style={{ animationDelay: "2s" }} />
+        <div className="hero-blob hero-blob-3 animate-pulse-glow" />
 
-        <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">Accès rapide</h2>
-            <p className="mt-4 text-slate-600">
-              Démarrez la navigation vers les modules clés de la plateforme.
-            </p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {[
-                { label: "Connexion", href: "/login" },
-                { label: "Tableau de bord", href: "/dashboard" },
-                { label: "Projets", href: "/projects" },
-                { label: "Détails projet", href: "/projects/cni-portal" },
-              ].map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300"
+        {/* Grid Pattern */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0)`,
+            backgroundSize: '40px 40px'
+          }}
+        />
+
+        <div className="relative z-10 max-w-6xl mx-auto text-center">
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8"
+          >
+            <SparklesIcon className="w-5 h-5 text-yellow-400" />
+            <span className="text-white/90 text-sm font-medium">
+              Centre National d'Informatique · Tunisie
+            </span>
+          </motion.div>
+
+          {/* Main Heading */}
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="font-display text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
+          >
+            Gérez vos projets
+            <br />
+            <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              avec excellence
+            </span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+            className="text-xl text-white/70 max-w-2xl mx-auto mb-12"
+          >
+            Plateforme moderne de gestion de projets, tâches et sprints conçue pour
+            optimiser la collaboration et la productivité de vos équipes.
+          </motion.p>
+
+          {/* CTA Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.6 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+          >
+            <Link
+              href="/login"
+              className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-slate-900 font-semibold rounded-2xl hover:bg-white/90 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl"
+            >
+              Commencer maintenant
+              <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link
+              href="/documentation"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-semibold rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-105"
+            >
+              Documentation
+            </Link>
+          </motion.div>
+
+          {/* Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8"
+          >
+            {stats.map((stat, index) => (
+              <div key={stat.label} className="text-center">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.5, delay: 1 + index * 0.1 }}
+                  className="text-4xl md:text-5xl font-bold text-white mb-2"
                 >
-                  {link.label}
-                  <span className="text-slate-400">→</span>
-                </a>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">Modules couverts</h2>
-            <p className="mt-4 text-slate-600">
-              Auth, projets, tâches Kanban, sprints, incidents, documents, notifications
-              et reporting.
-            </p>
-            <ul className="mt-6 list-disc space-y-2 pl-5 text-sm text-slate-600">
-              <li>Gestion complète des projets et affectations.</li>
-              <li>Suivi agile avec Kanban et sprints Scrum.</li>
-              <li>Traçabilité via issues, documents et rapports.</li>
-            </ul>
-          </div>
-        </section>
+                  {stat.value}
+                </motion.div>
+                <div className="text-white/60 text-sm">{stat.label}</div>
+              </div>
+            ))}
+          </motion.div>
+        </div>
 
-        <section className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">Objectifs clés</h2>
-            <ul className="mt-4 list-disc space-y-2 pl-5 text-slate-600">
-              <li>Concevoir une application web moderne et intuitive.</li>
-              <li>Assurer le suivi via Kanban, sprints et rapports.</li>
-              <li>Mettre en place une authentification sécurisée et des rôles.</li>
-              <li>Offrir un tableau de bord clair pour l'avancement des projets.</li>
-              <li>Appliquer les bonnes pratiques de développement et d'architecture.</li>
-            </ul>
+        {/* Scroll Indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2"
+        >
+          <div className="w-6 h-10 rounded-full border-2 border-white/30 flex justify-center pt-2">
+            <motion.div
+              animate={{ y: [0, 12, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="w-1.5 h-1.5 bg-white rounded-full"
+            />
           </div>
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">Acteurs du système</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {[
-                {
-                  title: "Administrateur",
-                  description:
-                    "Gère les comptes, les rôles et les autorisations d'accès.",
-                },
-                {
-                  title: "Chef de projet",
-                  description:
-                    "Crée les projets, organise les sprints et suit l'avancement.",
-                },
-                {
-                  title: "Membre d'équipe",
-                  description:
-                    "Met à jour les tâches, commente et suit ses responsabilités.",
-                },
-                {
-                  title: "Client / Stakeholder",
-                  description:
-                    "Accès optionnel pour consultation et validation.",
-                },
-              ].map((actor) => (
+        </motion.div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-24 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <span className="inline-block px-4 py-2 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">
+              Fonctionnalités
+            </span>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+              Tout ce dont vous avez besoin
+            </h2>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+              Une suite complète d'outils pour gérer efficacement vos projets,
+              équipes et livrables.
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            {features.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                variants={fadeInUp}
+                className="group relative p-8 rounded-3xl bg-white border border-slate-100 hover:border-slate-200 shadow-sm hover:shadow-xl transition-all duration-500"
+              >
+                {/* Gradient Glow on Hover */}
                 <div
-                  key={actor.title}
-                  className="rounded-2xl border border-slate-100 bg-slate-50 p-5"
-                >
-                  <h3 className="text-base font-semibold text-slate-900">
-                    {actor.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {actor.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+                  className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
+                />
 
-        <section className="rounded-3xl bg-white p-8 shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900">
-            Fonctionnalités principales (modules)
-          </h2>
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            {modules.map((module) => (
-              <div
-                key={module.title}
-                className="rounded-2xl border border-slate-100 bg-slate-50 p-6"
-              >
-                <h3 className="text-base font-semibold text-slate-900">
-                  {module.title}
+                <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${feature.gradient} mb-6`}>
+                  <feature.icon className="w-7 h-7 text-white" />
+                </div>
+
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">
+                  {feature.title}
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {module.description}
+
+                <p className="text-slate-600 leading-relaxed">
+                  {feature.description}
                 </p>
-                <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-600">
-                  {module.bullets.map((bullet) => (
-                    <li key={bullet}>{bullet}</li>
-                  ))}
-                </ul>
-              </div>
+              </motion.div>
             ))}
-          </div>
-        </section>
+          </motion.div>
+        </div>
+      </section>
 
-        <section className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">
-              Architecture technique
+      {/* Architecture Section */}
+      <section className="py-24 px-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <span className="inline-block px-4 py-2 bg-white/10 text-white rounded-full text-sm font-semibold mb-4">
+              Architecture
+            </span>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-6">
+              Technologies modernes
             </h2>
-            <div className="mt-4 space-y-5 text-slate-600">
-              {architecture.map((item) => (
-                <div key={item.title}>
-                  <h3 className="text-base font-semibold text-slate-800">
-                    {item.title}
-                  </h3>
-                  <ul className="mt-2 list-disc space-y-2 pl-5">
-                    {item.details.map((detail) => (
-                      <li key={detail}>{detail}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
+            <p className="text-xl text-white/60 max-w-2xl mx-auto">
+              Une stack technique robuste et performante pour une expérience optimale.
+            </p>
+          </motion.div>
 
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">Modèle de données</h2>
-            <div className="mt-4 space-y-4 text-slate-600">
-              {dataModels.map((model) => (
-                <div key={model.title}>
-                  <h3 className="text-base font-semibold text-slate-800">
-                    {model.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {model.fields}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-3xl bg-white p-8 shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900">API REST (exemples)</h2>
-          <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {apiEndpoints.map((endpoint) => (
-              <div
-                key={endpoint}
-                className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Frontend",
+                tech: "Next.js 16",
+                description: "Interface réactive avec React 19, TailwindCSS et Framer Motion",
+                icon: "⚛️",
+              },
+              {
+                title: "Backend",
+                tech: "Spring Boot",
+                description: "API REST sécurisée avec JWT, Spring Security et validation",
+                icon: "🍃",
+              },
+              {
+                title: "Base de données",
+                tech: "MongoDB",
+                description: "Stockage flexible et performant pour vos données projet",
+                icon: "🍃",
+              },
+            ].map((item, index) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="glass-dark rounded-3xl p-8 text-center"
               >
-                {endpoint}
-              </div>
+                <div className="text-5xl mb-4">{item.icon}</div>
+                <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
+                <div className="text-primary-400 font-mono text-sm mb-4">{item.tech}</div>
+                <p className="text-white/60">{item.description}</p>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">
-              Sécurité &amp; validation
+      {/* CTA Section */}
+      <section className="py-24 px-6 bg-white">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="max-w-4xl mx-auto text-center p-12 md:p-16 rounded-[40px] bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 relative overflow-hidden"
+        >
+          {/* Background Pattern */}
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+              backgroundSize: '30px 30px'
+            }}
+          />
+
+          <div className="relative z-10">
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-6">
+              Prêt à transformer votre gestion de projets ?
             </h2>
-            <ul className="mt-4 list-disc space-y-2 pl-5 text-slate-600">
-              {securityItems.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">Workflow cible</h2>
-            <ol className="mt-4 list-decimal space-y-2 pl-5 text-slate-600">
-              {workflowSteps.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">MVP (priorité)</h2>
-            <ul className="mt-4 list-disc space-y-2 pl-5 text-slate-600">
-              {mvpItems.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">Tests &amp; qualité</h2>
-            <ul className="mt-4 list-disc space-y-2 pl-5 text-slate-600">
-              {testItems.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">
-              Bonnes pratiques recommandées
-            </h2>
-            <ul className="mt-4 list-disc space-y-2 pl-5 text-slate-600">
-              {bestPractices.map((practice) => (
-                <li key={practice}>{practice}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">Planification</h2>
-            <div className="mt-4 space-y-4 text-slate-600">
-              <div>
-                <h3 className="text-base font-semibold text-slate-800">Semaine 1</h3>
-                <p className="mt-2 leading-7">
-                  Analyse des besoins, cahier des charges, architecture, authentification et
-                  gestion des utilisateurs.
-                </p>
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-slate-800">Semaine 2</h3>
-                <p className="mt-2 leading-7">
-                  Gestion des projets, tâches, sprints et Kanban.
-                </p>
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-slate-800">Semaine 3</h3>
-                <p className="mt-2 leading-7">
-                  Tableau de bord, rapports, tests, documentation et soutenance.
-                </p>
-              </div>
+            <p className="text-xl text-white/80 mb-10 max-w-xl mx-auto">
+              Rejoignez le CNI et découvrez une nouvelle façon de collaborer.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-indigo-600 font-semibold rounded-2xl hover:bg-white/90 transition-all duration-300 hover:scale-105 shadow-xl"
+              >
+                Accéder à la plateforme
+                <ArrowRightIcon className="w-5 h-5" />
+              </Link>
             </div>
           </div>
-        </section>
-      </main>
+        </motion.div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 px-6 bg-slate-900 text-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <h3 className="text-2xl font-bold font-display">
+                <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                  CNI
+                </span>{" "}
+                <span className="text-white/80">Gestion Projets</span>
+              </h3>
+              <p className="text-white/50 mt-2">
+                Centre National d'Informatique · Tunisie
+              </p>
+            </div>
+
+            <div className="flex gap-8">
+              <Link href="/login" className="text-white/70 hover:text-white transition-colors">
+                Connexion
+              </Link>
+              <Link href="/documentation" className="text-white/70 hover:text-white transition-colors">
+                Documentation
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-10 pt-8 border-t border-white/10 text-center text-white/40 text-sm">
+            © 2026 Centre National d'Informatique. Tous droits réservés.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

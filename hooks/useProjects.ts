@@ -1,66 +1,106 @@
-"use client";
+﻿"use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  createProject,
-  deleteProject,
-  getProject,
   getProjects,
-  updateProject,
+  getProjectById,
+  getProjectTasks,
+  createProject as createProjectApi,
+  updateProject as updateProjectApi,
+  deleteProject as deleteProjectApi,
+  addMemberToProject,
 } from "@/services/project.service";
-import { mockProjects } from "@/utils/constants";
-import type { Project } from "@/utils/types";
+import type { ProjectStatus } from "@/utils/types";
+
+type CreateProjectPayload = {
+  name: string;
+  description?: string;
+  status?: ProjectStatus;
+  startDate?: string;
+  endDate?: string;
+};
+
+type AddMemberPayload = {
+  projectId: string;
+  userIds: string[];
+  roleInProject: string;
+  taskTitle?: string;
+};
 
 export function useProjects() {
-  return useQuery({
-    queryKey: ["projects"],
-    queryFn: getProjects,
-    initialData: mockProjects,
-  });
-}
-
-export function useProject(projectId: string) {
-  return useQuery({
-    queryKey: ["projects", projectId],
-    queryFn: () => getProject(projectId),
-    initialData: mockProjects.find((project) => project.id === projectId),
-  });
-}
-
-export function useProjectActions() {
   const queryClient = useQueryClient();
 
-  const createMutation = useMutation({
-    mutationFn: createProject,
-    onSuccess: (project) => {
-      queryClient.setQueryData<Project[]>(["projects"], (old) =>
-        old ? [project, ...old] : [project],
-      );
+  const projectsQuery = useQuery({
+    queryKey: ["projects"],
+    queryFn: getProjects,
+  });
+
+  const create = useMutation({
+    mutationFn: createProjectApi,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<Project> }) =>
-      updateProject(id, payload),
-    onSuccess: (project) => {
-      queryClient.setQueryData<Project[]>(["projects"], (old) =>
-        old ? old.map((item) => (item.id === project.id ? project : item)) : [],
-      );
+  const update = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<CreateProjectPayload> }) =>
+      updateProjectApi(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteProject,
-    onSuccess: (_, id) => {
-      queryClient.setQueryData<Project[]>(["projects"], (old) =>
-        old ? old.filter((item) => item.id !== id) : [],
-      );
+  const remove = useMutation({
+    mutationFn: deleteProjectApi,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+
+  const addMember = useMutation({
+    mutationFn: async ({ projectId, userIds, roleInProject }: AddMemberPayload) => {
+      // Add all users in sequence
+      for (const userId of userIds) {
+        await addMemberToProject(projectId, userId, roleInProject);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 
   return {
-    createMutation,
-    updateMutation,
-    deleteMutation,
+    projects: projectsQuery.data ?? [],
+    isLoading: projectsQuery.isLoading,
+    error: projectsQuery.error,
+    create,
+    update,
+    remove,
+    addMember,
+    // Backwards compatibility
+    createProject: create,
+    updateProject: update,
+    deleteProject: remove,
+  };
+}
+
+export function useProject(id: string) {
+  const projectQuery = useQuery({
+    queryKey: ["project", id],
+    queryFn: () => getProjectById(id),
+    enabled: !!id,
+  });
+
+  const tasksQuery = useQuery({
+    queryKey: ["project-tasks", id],
+    queryFn: () => getProjectTasks(id),
+    enabled: !!id,
+  });
+
+  return {
+    project: projectQuery.data,
+    tasks: (tasksQuery.data ?? []) as any[],
+    isLoading: projectQuery.isLoading || tasksQuery.isLoading,
+    error: projectQuery.error || tasksQuery.error,
   };
 }

@@ -1,15 +1,15 @@
-"use client";
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createUser, getUsers, updateUser } from "@/services/user.service";
-import { mockUsers } from "@/utils/constants";
-import type { User } from "@/utils/types";
+
+import { useAuth } from "@/hooks/useAuth";
 
 export function useUsers() {
+  const { role } = useAuth();
+  const shouldFetch = role === "ADMIN" || role === "PROJECT_MANAGER";
   return useQuery({
     queryKey: ["users"],
-    queryFn: getUsers,
-    initialData: mockUsers,
+    queryFn: shouldFetch ? getUsers : async () => [],
+    enabled: shouldFetch,
   });
 }
 
@@ -18,25 +18,23 @@ export function useUserActions() {
 
   const createMutation = useMutation({
     mutationFn: createUser,
-    onSuccess: (user) => {
-      queryClient.setQueryData<User[]>(["users"], (old) =>
-        old ? [user, ...old] : [user],
-      );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+    onError: (err) => {
+      console.error("Create user error:", err);
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<User> }) =>
-      updateUser(id, payload),
-    onSuccess: (user) => {
-      queryClient.setQueryData<User[]>(["users"], (old) =>
-        old ? old.map((item) => (item.id === user.id ? user : item)) : [],
-      );
+    mutationFn: ({ id, payload }: { id: string; payload: any }) => updateUser(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+    onError: (err) => {
+      console.error("Update user error:", err);
     },
   });
 
-  return {
-    createMutation,
-    updateMutation,
-  };
+  return { createMutation, updateMutation };
 }
