@@ -139,7 +139,10 @@ export default function LoginPage() {
                       onBlur={() => setFocusedField(null)}
                       placeholder="votre@email.tn"
                       className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:border-purple-400/50 focus:bg-white/10 transition-all duration-300"
-                      autoComplete="username"
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck="false"
                     />
                   </div>
                 </div>
@@ -194,7 +197,7 @@ export default function LoginPage() {
                 <div className="flex items-start gap-3">
                   <ShieldCheckIcon className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    
+
                   </div>
                 </div>
               </div>
