@@ -193,14 +193,7 @@ export default function LoginPage() {
               </form>
 
               {/* Security Note */}
-              <div className="mt-8 p-4 rounded-2xl bg-white/5 border border-white/10">
-                <div className="flex items-start gap-3">
-                  <ShieldCheckIcon className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                  <div>
-
-                  </div>
-                </div>
-              </div>
+              
             </div>
 
             {/* Premium Graphical Showcase */}
@@ -217,7 +210,7 @@ export default function LoginPage() {
                   className="mb-8"
                 >
                   <img
-                    src="/artifacts/login_visual_showcase.png"
+                    src="https://www.annuaire.rn.tn/images/sites/803/213/_thumb1/cnibf6c2.jpg"
                     alt="CNI Ecosystem"
                     className="w-full h-48 object-cover rounded-2xl shadow-2xl border border-white/10"
                   />
