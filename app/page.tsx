@@ -83,9 +83,8 @@ const staggerContainer = {
 
 export default function LandingPage() {
   const { user, role } = useAuth();
-  const normalizedRole = role === "CHEF_DE_PROJET" ? "PROJECT_MANAGER" : role;
   // @ts-ignore
-  const targetPath = user && normalizedRole ? (roleRedirects[normalizedRole] || "/dashboard") : "/login";
+  const targetPath = user && role ? (roleRedirects[role] || "/dashboard") : "/login";
 
   return (
     <div className="min-h-screen bg-slate-50 overflow-hidden">
