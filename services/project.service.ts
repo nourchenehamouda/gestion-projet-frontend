@@ -73,6 +73,15 @@ export function addMemberToProject(projectId: string, userId: string, roleInProj
   });
 }
 
+// Assigner une tâche à un membre via l'endpoint dédié
+export function assignTaskToMember(projectId: string, taskId: string, assigneeId: string) {
+  return apiRequest(`/projects/${projectId}/assign-task`, {
+    method: "POST",
+    body: JSON.stringify({ taskId, assigneeId }),
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 // Télécharger le document d'un projet
 export async function downloadProjectDocument(projectId: string, fileName?: string) {
   const token = getToken();

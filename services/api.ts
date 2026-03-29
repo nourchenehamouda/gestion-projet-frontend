@@ -75,8 +75,12 @@ export async function apiRequest<T>(
   if (!response.ok) {
     const errorBody = await parseJsonSafely(response);
     
-    // Ne pas polluer la console pour l'erreur 401 attendue lors du contrôle de session
-    if (!(path === "/auth/me" && response.status === 401)) {
+    // Ne pas polluer la console pour l'erreur 401 attendue ou les erreurs de login
+    const isExpectedAuthError = 
+      (path === "/auth/me" && response.status === 401) || 
+      (path === "/auth/login" && (response.status === 401 || response.status === 403));
+      
+    if (!isExpectedAuthError) {
       // eslint-disable-next-line no-console
       console.error(`[API ERROR] ${path} status=${response.status}`, JSON.stringify(errorBody, null, 2));
     }

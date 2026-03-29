@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -10,6 +10,7 @@ import {
   deleteProject as deleteProjectApi,
   addMemberToProject,
 } from "@/services/project.service";
+import { createTask as createTaskApi } from "@/services/task.service";
 import type { ProjectStatus } from "@/utils/types";
 
 type CreateProjectPayload = {
@@ -24,7 +25,7 @@ type AddMemberPayload = {
   projectId: string;
   userIds: string[];
   roleInProject: string;
-  taskTitle?: string;
+  tasks?: string[];
 };
 
 export function useProjects() {
@@ -58,14 +59,30 @@ export function useProjects() {
   });
 
   const addMember = useMutation({
-    mutationFn: async ({ projectId, userIds, roleInProject }: AddMemberPayload) => {
+    mutationFn: async ({ projectId, userIds, roleInProject, tasks }: AddMemberPayload) => {
       // Add all users in sequence
       for (const userId of userIds) {
         await addMemberToProject(projectId, userId, roleInProject);
+        // Create initial tasks if provided
+        if (tasks && tasks.length > 0) {
+          for (const taskTitle of tasks) {
+            if (taskTitle.trim()) {
+              await createTaskApi({
+                projectId,
+                title: taskTitle.trim(),
+                assigneeId: userId,
+                status: "TODO",
+                priority: "MEDIUM"
+              });
+            }
+          }
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["project"] });
     },
   });
 

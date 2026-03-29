@@ -615,13 +615,13 @@ export default function ProjectsPage() {
                         projectId={memberModalProjectId}
                         users={users}
                         onClose={() => setMemberModalProjectId(null)}
-                        onAdd={(userId, roleInProject, taskTitle) => {
+                        onAdd={(userId, roleInProject, tasks) => {
                             addMember.mutate(
                                 {
                                     projectId: memberModalProjectId,
                                     userIds: [userId],
                                     roleInProject,
-                                    taskTitle,
+                                    tasks,
                                 },
                                 {
                                     onSuccess: () => setMemberModalProjectId(null),

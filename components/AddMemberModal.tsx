@@ -19,7 +19,7 @@ interface AddMemberModalProps {
   projectId: string;
   users: User[];
   onClose: () => void;
-  onAdd: (userId: string, roleInProject: string, taskTitle: string) => void;
+  onAdd: (userId: string, roleInProject: string, tasks: string[]) => void;
 }
 
 const roleIcons: Record<Role, any> = {
@@ -44,7 +44,19 @@ export default function AddMemberModal({
 }: AddMemberModalProps) {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [roleInProject, setRoleInProject] = useState("EMPLOYEE");
-  const [taskTitle, setTaskTitle] = useState("");
+  const [tasks, setTasks] = useState<string[]>([""]);
+
+  const addTask = () => setTasks([...tasks, ""]);
+  const updateTask = (index: number, value: string) => {
+    const newTasks = [...tasks];
+    newTasks[index] = value;
+    setTasks(newTasks);
+  };
+  const removeTask = (index: number) => {
+    setTasks(tasks.filter((_, i) => i !== index));
+  };
+  
+  const hasValidTask = tasks.some(t => t.trim().length > 0);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<Role | "ALL">("ALL");
 
@@ -73,8 +85,8 @@ export default function AddMemberModal({
   }, [users, roleFilter, search]);
 
   const handleAdd = () => {
-    if (!selectedUser) return;
-    onAdd(selectedUser.id, roleInProject, taskTitle);
+    if (!selectedUser || !hasValidTask) return;
+    onAdd(selectedUser.id, roleInProject, tasks.filter(t => t.trim().length > 0));
   };
 
   return (
@@ -238,16 +250,40 @@ export default function AddMemberModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Tâche initiale (optionnel)
-                </label>
-                <input
-                  type="text"
-                  value={taskTitle}
-                  onChange={(e) => setTaskTitle(e.target.value)}
-                  placeholder="Ex: Développement frontend"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50 transition-all"
-                />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-slate-700">
+                    Tâches initiales (obligatoire)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addTask}
+                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                  >
+                    + Ajouter une tâche
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  {tasks.map((task, index) => (
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={task}
+                        onChange={(e) => updateTask(index, e.target.value)}
+                        placeholder="Ex: Configuration du serveur..."
+                        className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-50 transition-all text-sm"
+                      />
+                      {tasks.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeTask(index)}
+                          className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                        >
+                          <XMarkIcon className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </motion.div>
           )}
@@ -267,7 +303,7 @@ export default function AddMemberModal({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleAdd}
-            disabled={!selectedUser}
+            disabled={!selectedUser || !hasValidTask}
             className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UserPlusIcon className="w-5 h-5" />
