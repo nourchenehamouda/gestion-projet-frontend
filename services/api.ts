@@ -1,4 +1,4 @@
-﻿
+
 
 import { API_BASE_URL } from "@/utils/constants";
 
@@ -74,11 +74,15 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const errorBody = await parseJsonSafely(response);
-    // Log le body d'erreur pour debug backend
     // eslint-disable-next-line no-console
-    console.error(`[API ERROR] ${path} status=${response.status}`, errorBody);
+    console.error(`[API ERROR] ${path} status=${response.status}`, JSON.stringify(errorBody, null, 2));
+    const message =
+      (errorBody && typeof errorBody === "object" && errorBody.message) ||
+      (typeof errorBody === "string" && errorBody) ||
+      response.statusText ||
+      "Unexpected error";
     throw new ApiError({
-      message: response.statusText || "Unexpected error",
+      message,
       status: response.status,
     });
   }

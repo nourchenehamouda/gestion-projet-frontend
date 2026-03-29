@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useProject } from "@/hooks/useProjects";
+import { downloadProjectDocument } from "@/services/project.service";
 import { projectStatusLabels, taskStatusLabels } from "@/utils/constants";
 import {
   ArrowLeftIcon,
@@ -18,6 +19,7 @@ import {
   ClockIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 
 const statusGradients: Record<string, string> = {
@@ -315,28 +317,38 @@ export default function ProjectDetailsPage({ params }: PageProps) {
               exit={{ opacity: 0, y: -20 }}
               className="bg-white rounded-3xl border border-slate-100 p-8"
             >
-              <div className="text-center py-12">
-                <DocumentTextIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">
-                  Documents du projet
-                </h3>
-                <p className="text-slate-500 mb-6">
-                  {projectData.documentUrl
-                    ? "Téléchargez les documents associés au projet."
-                    : "Aucun document n'a été ajouté à ce projet."}
-                </p>
-                {projectData.documentUrl && (
-                  <a
-                    href={projectData.documentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-primary inline-flex items-center gap-2"
+              {projectData.hasDocument ? (
+                <div className="flex flex-col items-center py-8">
+                  <div className="p-4 rounded-2xl bg-indigo-50 mb-4">
+                    <DocumentTextIcon className="w-12 h-12 text-indigo-500" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                    Document du projet
+                  </h3>
+                  <p className="text-slate-500 mb-2 text-center">
+                    {projectData.documentName || "Document attaché"}
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => downloadProjectDocument(resolvedParams.id, projectData.documentName)}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all mt-4"
                   >
-                    <DocumentTextIcon className="w-5 h-5" />
+                    <ArrowDownTrayIcon className="w-5 h-5" />
                     Télécharger
-                  </a>
-                )}
-              </div>
+                  </motion.button>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <DocumentTextIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                    Documents du projet
+                  </h3>
+                  <p className="text-slate-500">
+                    Aucun document n'a été ajouté à ce projet.
+                  </p>
+                </div>
+              )}
             </motion.div>
           )}
 

@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
+import { roleRedirects } from "@/utils/roles";
 import {
   ChartBarIcon,
   ClipboardDocumentCheckIcon,
@@ -80,6 +82,11 @@ const staggerContainer = {
 };
 
 export default function LandingPage() {
+  const { user, role } = useAuth();
+  const normalizedRole = role === "CHEF_DE_PROJET" ? "PROJECT_MANAGER" : role;
+  // @ts-ignore
+  const targetPath = user && normalizedRole ? (roleRedirects[normalizedRole] || "/dashboard") : "/login";
+
   return (
     <div className="min-h-screen bg-slate-50 overflow-hidden">
       {/* Hero Section */}
@@ -144,10 +151,10 @@ export default function LandingPage() {
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             <Link
-              href="/login"
+              href={targetPath}
               className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-slate-900 font-semibold rounded-2xl hover:bg-white/90 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl"
             >
-              Commencer maintenant
+              {user ? "Accéder au Dashboard" : "Commencer maintenant"}
               <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
@@ -340,10 +347,10 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/login"
+                href={targetPath}
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-indigo-600 font-semibold rounded-2xl hover:bg-white/90 transition-all duration-300 hover:scale-105 shadow-xl"
               >
-                Accéder à la plateforme
+                {user ? "Accéder au Dashboard" : "Accéder à la plateforme"}
                 <ArrowRightIcon className="w-5 h-5" />
               </Link>
             </div>
@@ -368,8 +375,8 @@ export default function LandingPage() {
             </div>
 
             <div className="flex gap-8">
-              <Link href="/login" className="text-white/70 hover:text-white transition-colors">
-                Connexion
+              <Link href={targetPath} className="text-white/70 hover:text-white transition-colors">
+                {user ? "Dashboard" : "Connexion"}
               </Link>
               <Link href="/documentation" className="text-white/70 hover:text-white transition-colors">
                 Documentation

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,12 +29,23 @@ import {
 } from "@heroicons/react/24/outline";
 
 const projectSchema = z.object({
-    name: z.string().min(2, "Nom requis"),
+    name: z.string().min(2, "Nom requis (min 2 caractères)"),
     description: z.string().optional(),
     status: z.enum(["PLANNED", "IN_PROGRESS", "DONE", "PAUSED"]),
-    startDate: z.string().optional(),
-    endDate: z.string().optional(),
-});
+    startDate: z.string().min(1, "Date de début requise"),
+    endDate: z.string().min(1, "Date de fin requise"),
+}).refine(
+    (data) => {
+        if (data.startDate && data.endDate) {
+            return new Date(data.endDate) >= new Date(data.startDate);
+        }
+        return true;
+    },
+    {
+        message: "La date de fin doit être après la date de début",
+        path: ["endDate"],
+    }
+);
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
@@ -136,7 +147,14 @@ export default function ProjectsPage() {
                 setShowCreateForm(false);
             },
             onError: (err: any) => {
-                setFormError(err?.message || "Erreur lors de la création");
+                const msg = err?.message || "";
+                if (msg.includes("existe déjà") || msg.includes("PROJECT_NAME_DUPLICATE")) {
+                    setFormError("Un projet avec ce nom existe déjà. Veuillez choisir un autre nom.");
+                } else if (msg.includes("date") || msg.includes("DATE_INVALID")) {
+                    setFormError("La date de fin doit être après la date de début.");
+                } else {
+                    setFormError(msg || "Erreur lors de la création du projet.");
+                }
             },
         });
     };
@@ -521,23 +539,29 @@ export default function ProjectsPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1">
-                                            Date de début
+                                            Date de début *
                                         </label>
                                         <input
                                             type="date"
                                             className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50 transition-all"
                                             {...register("startDate")}
                                         />
+                                        {errors.startDate && (
+                                            <p className="mt-1 text-xs text-red-500">{errors.startDate.message}</p>
+                                        )}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1">
-                                            Date de fin
+                                            Date de fin *
                                         </label>
                                         <input
                                             type="date"
                                             className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50 transition-all"
                                             {...register("endDate")}
                                         />
+                                        {errors.endDate && (
+                                            <p className="mt-1 text-xs text-red-500">{errors.endDate.message}</p>
+                                        )}
                                     </div>
                                 </div>
 

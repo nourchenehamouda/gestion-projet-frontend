@@ -1,4 +1,5 @@
-﻿import { apiRequest } from "@/services/api";
+import { apiRequest, getToken } from "@/services/api";
+import { API_BASE_URL } from "@/utils/constants";
 import type { ProjectStatus } from "@/utils/types";
 // Supprimer un projet
 export function deleteProject(id: string) {
@@ -70,4 +71,27 @@ export function addMemberToProject(projectId: string, userId: string, roleInProj
     body: JSON.stringify({ userId, roleInProject }),
     headers: { "Content-Type": "application/json" },
   });
+}
+
+// Télécharger le document d'un projet
+export async function downloadProjectDocument(projectId: string, fileName?: string) {
+  const token = getToken();
+
+  const response = await fetch(`${API_BASE_URL}/projects/${projectId}/download`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (!response.ok) {
+    throw new Error("Impossible de télécharger le document");
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName || "document";
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
 }

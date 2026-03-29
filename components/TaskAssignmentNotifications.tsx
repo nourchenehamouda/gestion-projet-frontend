@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getNotifications, acceptNotification, refuseNotification, getPendingNotifications } from "@/services/notification.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import {
   BellIcon,
   CheckIcon,
@@ -12,6 +13,7 @@ import {
   FolderIcon,
   ClipboardDocumentListIcon,
   InboxIcon,
+  EyeIcon,
 } from "@heroicons/react/24/outline";
 
 export type TaskAssignmentNotificationDto = {
@@ -225,6 +227,19 @@ export default function TaskAssignmentNotifications() {
                           <XMarkIcon className="w-4 h-4" />
                           Refuser
                         </motion.button>
+                      </div>
+                    )}
+
+                    {/* Voir le projet button - after accepted */}
+                    {notif.status === "ACCEPTED" && notif.projectId && (
+                      <div className="mt-3">
+                        <Link
+                          href={`/projects/${notif.projectId}`}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 text-indigo-600 font-medium text-sm hover:bg-indigo-100 transition-colors"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                          Voir le projet
+                        </Link>
                       </div>
                     )}
                   </div>

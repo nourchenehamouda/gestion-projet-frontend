@@ -10,9 +10,10 @@ type AppShellProps = {
 
 export default function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
-  const isLogin = pathname === "/login";
+  const noShellPaths = ["/", "/login", "/documentation", "/client"];
+  const isNoShell = pathname ? noShellPaths.includes(pathname) : false;
 
-  if (isLogin) {
+  if (isNoShell) {
     return <>{children}</>;
   }
 
