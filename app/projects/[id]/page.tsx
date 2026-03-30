@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useCallback, useRef } from "react";
+import { use, useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useProject, useProjects } from "@/hooks/useProjects";
@@ -84,7 +84,7 @@ export default function ProjectDetailsPage({ params }: PageProps) {
   const { project, tasks, isLoading, error } = useProject(projectId);
   const { role } = useAuth();
   const queryClient = useQueryClient();
-  const { addMember } = useProjects();
+  const { addMember, update: updateProject } = useProjects();
   const { data: allUsers = [] } = useUsers();
 
   const [activeTab, setActiveTab] = useState("board");
@@ -112,15 +112,40 @@ export default function ProjectDetailsPage({ params }: PageProps) {
   // Mutations
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => updateTask(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
+    onMutate: async ({ id, data }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["project-tasks", projectId] });
+
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData(["project-tasks", projectId]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["project-tasks", projectId], (old: any[] | undefined) => {
+        if (!old) return [];
+        return old.map((t: any) => 
+          t.id === id ? { ...t, ...data } : t
+        );
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousTasks };
+    },
+    onError: (err, newTodo, context: any) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      queryClient.setQueryData(["project-tasks", projectId], context.previousTasks);
+    },
+    onSettled: () => {
+      // Always refetch after error or success to throw away optimistic update and sync with server
+      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["project"] });
     },
   });
 
   const deleteTaskMutation = useMutation({
     mutationFn: (id: string) => deleteTask(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["project"] });
       setSelectedTasks(new Set());
     },
   });
@@ -128,7 +153,8 @@ export default function ProjectDetailsPage({ params }: PageProps) {
   const createTaskMutation = useMutation({
     mutationFn: (data: any) => createTask(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["project"] });
       setShowCreateModal(null);
     },
   });
@@ -139,6 +165,21 @@ export default function ProjectDetailsPage({ params }: PageProps) {
     IN_PROGRESS: tasks.filter((t: any) => t.status === "IN_PROGRESS"),
     DONE: tasks.filter((t: any) => t.status === "DONE"),
   };
+
+  // Automatic project status synchronization
+  useEffect(() => {
+    if (!project || tasks.length === 0 || !canManage) return;
+
+    const allTasksDone = tasks.every((t: any) => t.status === "DONE");
+    const currentStatus = (project as any).status;
+
+    if (allTasksDone && currentStatus !== "DONE") {
+      updateProject.mutate({ id: projectId, data: { status: "DONE" } });
+    } else if (!allTasksDone && currentStatus === "DONE") {
+      // If we move a task back from DONE, or add a new task, the project is no longer DONE
+      updateProject.mutate({ id: projectId, data: { status: "IN_PROGRESS" } });
+    }
+  }, [tasks, (project as any)?.status, projectId, canManage, updateProject]);
 
   // Drag & Drop handlers
   const handleDragStart = (taskId: string) => {

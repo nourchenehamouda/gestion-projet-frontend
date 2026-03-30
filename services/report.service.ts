@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
+import { taskStatusLabels } from "@/utils/constants";
 
 interface ReportData {
   project: any;
@@ -11,8 +12,8 @@ export const generateProjectReport = (data: ReportData) => {
   const doc = new jsPDF() as any;
 
   // --- Styles & Palette ---
-  const primaryColor = [79, 70, 229]; // Indigo-600
-  const secondaryColor = [100, 116, 139]; // Slate-500
+  const primaryColor: [number, number, number] = [79, 70, 229]; // Indigo-600
+  const secondaryColor: [number, number, number] = [100, 116, 139]; // Slate-500
   
   // --- Header ---
   doc.setFillColor(248, 250, 252); // bg-slate-50
@@ -79,7 +80,7 @@ export const generateProjectReport = (data: ReportData) => {
     m.roleInProject === "PROJECT_MANAGER" ? "Chef de projet" : m.roleInProject || "Membre"
   ]);
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: currentY,
     head: [["Nom", "Rôle"]],
     body: memberRows,
@@ -98,12 +99,12 @@ export const generateProjectReport = (data: ReportData) => {
 
   const taskRows = tasks.map((t: any) => [
     t.title,
-    t.status === "DONE" ? "TERMINÉE" : t.status,
+    taskStatusLabels[t.status as keyof typeof taskStatusLabels] || t.status,
     t.priority || "MEDIUM",
     t.dueDate || "-"
   ]);
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: currentY,
     head: [["Tâche", "Statut", "Priorité", "Échéance"]],
     body: taskRows,

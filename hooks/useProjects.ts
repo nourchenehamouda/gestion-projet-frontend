@@ -57,6 +57,7 @@ export function useProjects() {
       updateProjectApi(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project"] });
     },
   });
 
@@ -90,8 +91,8 @@ export function useProjects() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["project"] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
     },
   });
 

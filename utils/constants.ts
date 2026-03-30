@@ -1,4 +1,4 @@
-﻿export const API_BASE_URL =
+export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8084/api";
 
 export const projectStatusLabels = {
@@ -9,7 +9,7 @@ export const projectStatusLabels = {
 } as const;
 
 export const taskStatusLabels = {
-  TODO: "To Do",
-  IN_PROGRESS: "In Progress",
-  DONE: "Done",
+  TODO: "À faire",
+  IN_PROGRESS: "En cours",
+  DONE: "Terminé",
 } as const;
