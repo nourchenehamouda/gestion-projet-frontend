@@ -138,28 +138,31 @@ export default function ProjectDetailsPage({ params }: PageProps) {
   // Mutations
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => updateTask(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
+    onSuccess: async () => {
+      // IMPORTANT: await refetch completion BEFORE clearing overrides
+      // Otherwise overrides are cleared while server data is still stale → task reverts
+      await queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       clearLocalOverrides();
     },
-    onError: () => {
+    onError: async () => {
+      // Refetch to get true server state, then clear overrides
+      await queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
       clearLocalOverrides();
-      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
     },
   });
 
   const deleteTaskMutation = useMutation({
     mutationFn: (id: string) => deleteTask(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       setSelectedTasks(new Set());
       clearLocalOverrides();
     },
-    onError: () => {
+    onError: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
       clearLocalOverrides();
-      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
     },
   });
 
