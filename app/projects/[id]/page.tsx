@@ -81,7 +81,7 @@ interface PageProps {
 export default function ProjectDetailsPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const projectId = resolvedParams.id;
-  const { project, tasks, isLoading, error } = useProject(projectId);
+  const { project, tasks: serverTasks, isLoading, error } = useProject(projectId);
   const { role } = useAuth();
   const queryClient = useQueryClient();
   const { addMember, update: updateProject } = useProjects();
@@ -89,6 +89,16 @@ export default function ProjectDetailsPage({ params }: PageProps) {
 
   const [activeTab, setActiveTab] = useState("board");
   
+  // === OVERRIDE-BASED REACTIVITY (no useEffect, no sync issues) ===
+  // Local overrides applied on top of server data for instant UI updates
+  const [taskOverrides, setTaskOverrides] = useState<Record<string, any>>({});
+  const [removedTaskIds, setRemovedTaskIds] = useState<Set<string>>(new Set());
+
+  // Compute displayed tasks: server data + local overrides (NO useEffect needed!)
+  const tasks = serverTasks
+    .filter((t: any) => !removedTaskIds.has(t.id))
+    .map((t: any) => taskOverrides[t.id] ? { ...t, ...taskOverrides[t.id] } : t);
+
   // Task modal states
   const [editingTask, setEditingTask] = useState<any | null>(null);
   const [showCreateModal, setShowCreateModal] = useState<string | null>(null); // status for new task
@@ -109,53 +119,59 @@ export default function ProjectDetailsPage({ params }: PageProps) {
 
   const canManage = role === "ADMIN" || role === "PROJECT_MANAGER";
 
+  // Helper: override a task's fields locally (instant UI update)
+  const updateTaskLocally = (taskId: string, data: any) => {
+    setTaskOverrides(prev => ({ ...prev, [taskId]: { ...(prev[taskId] || {}), ...data } }));
+  };
+
+  // Helper: mark a task as removed locally (instant UI update)
+  const removeTaskLocally = (taskId: string) => {
+    setRemovedTaskIds(prev => new Set(prev).add(taskId));
+  };
+
+  // Clear all local overrides (called after server sync)
+  const clearLocalOverrides = () => {
+    setTaskOverrides({});
+    setRemovedTaskIds(new Set());
+  };
+
   // Mutations
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => updateTask(id, data),
-    onMutate: async ({ id, data }) => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: ["project-tasks", projectId] });
-
-      // Snapshot the previous value
-      const previousTasks = queryClient.getQueryData(["project-tasks", projectId]);
-
-      // Optimistically update to the new value
-      queryClient.setQueryData(["project-tasks", projectId], (old: any[] | undefined) => {
-        if (!old) return [];
-        return old.map((t: any) => 
-          t.id === id ? { ...t, ...data } : t
-        );
-      });
-
-      // Return a context object with the snapshotted value
-      return { previousTasks };
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      clearLocalOverrides();
     },
-    onError: (err, newTodo, context: any) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      queryClient.setQueryData(["project-tasks", projectId], context.previousTasks);
-    },
-    onSettled: () => {
-      // Always refetch after error or success to throw away optimistic update and sync with server
-      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["project"] });
+    onError: () => {
+      clearLocalOverrides();
+      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
     },
   });
 
   const deleteTaskMutation = useMutation({
     mutationFn: (id: string) => deleteTask(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["project"] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       setSelectedTasks(new Set());
+      clearLocalOverrides();
+    },
+    onError: () => {
+      clearLocalOverrides();
+      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
     },
   });
 
   const createTaskMutation = useMutation({
     mutationFn: (data: any) => createTask(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["project"] });
+    onSuccess: (newTask) => {
+      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       setShowCreateModal(null);
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] });
     },
   });
 
@@ -179,7 +195,8 @@ export default function ProjectDetailsPage({ params }: PageProps) {
       // If we move a task back from DONE, or add a new task, the project is no longer DONE
       updateProject.mutate({ id: projectId, data: { status: "IN_PROGRESS" } });
     }
-  }, [tasks, (project as any)?.status, projectId, canManage, updateProject]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(tasks.map((t: any) => t.status)), (project as any)?.status, projectId, canManage]);
 
   // Drag & Drop handlers
   const handleDragStart = (taskId: string) => {
@@ -203,6 +220,8 @@ export default function ProjectDetailsPage({ params }: PageProps) {
 
     const task = tasks.find((t: any) => t.id === draggedTaskId);
     if (task && task.status !== newStatus) {
+      // Instant local update THEN API call
+      updateTaskLocally(draggedTaskId, { status: newStatus });
       updateTaskMutation.mutate({ id: draggedTaskId, data: { status: newStatus } });
     }
     setDraggedTaskId(null);
@@ -233,6 +252,11 @@ export default function ProjectDetailsPage({ params }: PageProps) {
   };
 
   const bulkChangeStatus = async (newStatus: string) => {
+    // Instant local update for ALL selected tasks
+    for (const taskId of selectedTasks) {
+      updateTaskLocally(taskId, { status: newStatus });
+    }
+    // Then persist to server
     for (const taskId of selectedTasks) {
       await updateTaskMutation.mutateAsync({ id: taskId, data: { status: newStatus } });
     }
@@ -242,6 +266,11 @@ export default function ProjectDetailsPage({ params }: PageProps) {
 
   const bulkDeleteTasks = async () => {
     if (!window.confirm(`Supprimer ${selectedTasks.size} tâche(s) ?`)) return;
+    // Instant local removal
+    for (const taskId of selectedTasks) {
+      removeTaskLocally(taskId);
+    }
+    // Then persist to server
     for (const taskId of selectedTasks) {
       await deleteTaskMutation.mutateAsync(taskId);
     }
@@ -590,6 +619,7 @@ export default function ProjectDetailsPage({ params }: PageProps) {
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       if (window.confirm(`Supprimer "${task.title}" ?`)) {
+                                        removeTaskLocally(task.id);
                                         deleteTaskMutation.mutate(task.id);
                                       }
                                     }}
@@ -756,10 +786,10 @@ export default function ProjectDetailsPage({ params }: PageProps) {
             onClose={() => { setEditingTask(null); setShowCreateModal(null); }}
             onSave={(data) => {
               if (editingTask) {
-                updateTaskMutation.mutate(
-                  { id: editingTask.id, data },
-                  { onSuccess: () => setEditingTask(null) }
-                );
+                // Instant local update
+                updateTaskLocally(editingTask.id, data);
+                setEditingTask(null);
+                updateTaskMutation.mutate({ id: editingTask.id, data });
               } else {
                 createTaskMutation.mutate(
                   { ...data, projectId },
