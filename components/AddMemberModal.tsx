@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { User, Role } from "@/utils/types";
 import { roleLabels } from "@/utils/roles";
+import { useProjects } from "@/hooks/useProjects";
 import {
   MagnifyingGlassIcon,
   UserPlusIcon,
@@ -61,10 +62,36 @@ export default function AddMemberModal({
   const [roleFilter, setRoleFilter] = useState<Role | "ALL">("ALL");
 
   // Filter users - include all roles (employees AND clients)
+  const { projects } = useProjects();
+  
   const filteredUsers = useMemo(() => {
-    let result = users.filter(
-      (u) => u.role === "EMPLOYEE" || u.role === "CLIENT"
-    );
+    // Collect all user IDs who are currently in ANY active project (not DONE)
+    const activeProjectMemberIds = new Set<string>();
+    
+    if (Array.isArray(projects)) {
+      projects.forEach((p: any) => {
+      // Si le projet n'est pas terminé
+      if (p.status !== "DONE") {
+        if (p.members && Array.isArray(p.members)) {
+          p.members.forEach((m: any) => {
+            // Ignorer si c'est le projet actuel (pour permettre la réassignation / ajout de tâches)
+            if (p.id !== projectId) {
+              activeProjectMemberIds.add(m.userId);
+            }
+          });
+        }
+      }
+      });
+    }
+
+    let result = users.filter((u) => {
+      // 1. Must be EMPLOYEE or CLIENT
+      if (u.role !== "EMPLOYEE" && u.role !== "CLIENT") return false;
+      // 2. Must NOT be an employee already working on another active project
+      if (u.role === "EMPLOYEE" && activeProjectMemberIds.has(u.id)) return false;
+      
+      return true;
+    });
 
     // Filter by role
     if (roleFilter !== "ALL") {
@@ -82,7 +109,7 @@ export default function AddMemberModal({
     }
 
     return result;
-  }, [users, roleFilter, search]);
+  }, [users, roleFilter, search, projects, projectId]);
 
   const handleAdd = () => {
     if (!selectedUser || !hasValidTask) return;

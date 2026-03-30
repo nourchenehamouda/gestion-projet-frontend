@@ -9,6 +9,7 @@ import {
   updateProject as updateProjectApi,
   deleteProject as deleteProjectApi,
   addMemberToProject,
+  getActiveEmployeeIds,
 } from "@/services/project.service";
 import { createTask as createTaskApi } from "@/services/task.service";
 import type { ProjectStatus } from "@/utils/types";
@@ -21,12 +22,20 @@ type CreateProjectPayload = {
   endDate?: string;
 };
 
-type AddMemberPayload = {
+export type AddMemberPayload = {
   projectId: string;
   userIds: string[];
-  roleInProject: string;
+  roleInProject?: string;
   tasks?: string[];
 };
+
+export function useActiveEmployees() {
+  const query = useQuery({
+    queryKey: ["active-employees"],
+    queryFn: getActiveEmployeeIds,
+  });
+  return query;
+}
 
 export function useProjects() {
   const queryClient = useQueryClient();

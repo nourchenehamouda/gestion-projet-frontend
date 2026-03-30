@@ -24,6 +24,10 @@ export function getProjects() {
   return apiRequest("/projects");
 }
 
+export function getActiveEmployeeIds() {
+  return apiRequest("/projects/active-employees");
+}
+
 export function getProjectById(id: string) {
   return apiRequest(`/projects/${id}`);
 }

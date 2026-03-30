@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -68,10 +68,10 @@ export default function DashboardPage() {
     {
       title: "Statistiques",
       description: "Tableaux de bord et rapports",
-      href: "#",
+      href: "/statistics",
       icon: ChartBarIcon,
       gradient: "from-purple-500 to-pink-600",
-      disabled: true,
+      disabled: false,
     },
   ];
 

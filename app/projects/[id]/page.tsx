@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUsers } from "@/hooks/useUsers";
 import { downloadProjectDocument } from "@/services/project.service";
 import { createTask, updateTask, deleteTask } from "@/services/task.service";
+import { generateProjectReport } from "@/services/report.service";
 import { projectStatusLabels, taskStatusLabels } from "@/utils/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import AddMemberModal from "@/components/AddMemberModal";
@@ -397,6 +398,23 @@ export default function ProjectDetailsPage({ params }: PageProps) {
                 {tab.label}
               </button>
             ))}
+
+            <button
+              onClick={() => generateProjectReport({ project: projectData, tasks })}
+              disabled={projectData.status !== "DONE"}
+              title={projectData.status !== "DONE" ? "Le projet doit être terminé pour générer le rapport" : "Générer le rapport PDF"}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all border ${
+                projectData.status === "DONE"
+                  ? "bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm"
+                  : "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
+              }`}
+            >
+              <ArrowDownTrayIcon className="w-5 h-5" />
+              Rapport
+              {projectData.status !== "DONE" && (
+                <span className="ml-1 text-[10px] uppercase tracking-wider font-bold text-slate-400/80">(Bientôt)</span>
+              )}
+            </button>
           </div>
 
           {canManage && activeTab === "board" && (
