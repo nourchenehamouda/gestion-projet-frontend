@@ -14,7 +14,7 @@ type LoginResponse = {
   role: string;
   token: string;
 };
-
+//client 
 export async function login(payload: LoginPayload) {
   // Retourne la réponse brute du backend (doit contenir {id, name, email, role, token})
   return await apiRequest<LoginResponse>("/auth/login", {
