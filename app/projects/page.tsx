@@ -34,6 +34,7 @@ const projectSchema = z.object({
     status: z.enum(["PLANNED", "IN_PROGRESS", "DONE", "PAUSED"]),
     startDate: z.string().min(1, "Date de début requise"),
     endDate: z.string().min(1, "Date de fin requise"),
+    clientId: z.string().optional(),
 }).refine(
     (data) => {
         if (data.startDate && data.endDate) {
@@ -531,6 +532,23 @@ export default function ProjectsPage() {
                                         {Object.entries(projectStatusLabels).map(([value, label]) => (
                                             <option key={value} value={value}>
                                                 {label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        Client (optionnel)
+                                    </label>
+                                    <select
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50 transition-all"
+                                        {...register("clientId")}
+                                    >
+                                        <option value="">-- Aucun client --</option>
+                                        {users.filter((u: any) => u.role === "CLIENT").map((client: any) => (
+                                            <option key={client.id} value={client.id}>
+                                                {client.name} ({client.email})
                                             </option>
                                         ))}
                                     </select>

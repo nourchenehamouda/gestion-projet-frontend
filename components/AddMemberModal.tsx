@@ -59,7 +59,6 @@ export default function AddMemberModal({
   
   const hasValidTask = tasks.some(t => t.trim().length > 0);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<Role | "ALL">("ALL");
 
   // Filter users - include all roles (employees AND clients)
   const { projects } = useProjects();
@@ -85,18 +84,13 @@ export default function AddMemberModal({
     }
 
     let result = users.filter((u) => {
-      // 1. Must be EMPLOYEE or CLIENT
-      if (u.role !== "EMPLOYEE" && u.role !== "CLIENT") return false;
+      // 1. Must be EMPLOYEE
+      if (u.role !== "EMPLOYEE") return false;
       // 2. Must NOT be an employee already working on another active project
-      if (u.role === "EMPLOYEE" && activeProjectMemberIds.has(u.id)) return false;
+      if (activeProjectMemberIds.has(u.id)) return false;
       
       return true;
     });
-
-    // Filter by role
-    if (roleFilter !== "ALL") {
-      result = result.filter((u) => u.role === roleFilter);
-    }
 
     // Filter by search
     if (search.trim()) {
@@ -109,7 +103,7 @@ export default function AddMemberModal({
     }
 
     return result;
-  }, [users, roleFilter, search, projects, projectId]);
+  }, [users, search, projects, projectId]);
 
   const handleAdd = () => {
     if (!selectedUser || !hasValidTask) return;
@@ -136,7 +130,7 @@ export default function AddMemberModal({
           <div>
             <h2 className="text-xl font-bold text-slate-900">Ajouter un membre</h2>
             <p className="text-slate-500 text-sm mt-1">
-              Sélectionnez un employé ou client à ajouter au projet.
+              Sélectionnez un employé à ajouter au projet.
             </p>
           </div>
           <button
@@ -161,21 +155,7 @@ export default function AddMemberModal({
             />
           </div>
 
-          {/* Role Filter Tabs */}
-          <div className="flex gap-2">
-            {(["ALL", "EMPLOYEE", "CLIENT"] as const).map((role) => (
-              <button
-                key={role}
-                onClick={() => setRoleFilter(role)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${roleFilter === role
-                  ? "bg-indigo-100 text-indigo-700"
-                  : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-                  }`}
-              >
-                {role === "ALL" ? "Tous" : roleLabels[role]}
-              </button>
-            ))}
-          </div>
+
         </div>
 
         {/* User List */}
@@ -270,9 +250,7 @@ export default function AddMemberModal({
                 >
                   <option value="EMPLOYEE">Membre</option>
                   <option value="PROJECT_MANAGER">Responsable</option>
-                  {selectedUser.role === "CLIENT" && (
-                    <option value="CLIENT">Client</option>
-                  )}
+
                 </select>
               </div>
 
